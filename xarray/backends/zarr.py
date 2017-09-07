@@ -76,6 +76,8 @@ class ZarrStore(AbstractWritableDataStore, DataStorePickleMixin):
 
     # need some special secret attributes to tell us the dimensions
     _dimension_key = '_XARRAY_DIMENSIONS'
+    default_arguments = dict(compressor='default', order='C', synchronizer=None,
+                             filters=None, cache_metadata=True, kwargs={})
 
     def __init__(self, store=None, overwrite=False, chunk_store=None,
                  synchronizer=None, path=None, writer=None, autoclose=False):
@@ -158,8 +160,11 @@ class ZarrStore(AbstractWritableDataStore, DataStorePickleMixin):
 
         # TODO: figure out how to pass along all those other arguments
 
+        kwargs = self.default_arguments.copy()
+        kwargs.update(kwargs.pop('kwargs'))
         zarr_array = self.ds.create(name, shape=shape, dtype=dtype,
-                                    chunks=chunks, fill_value=fill_value)
+                                    chunks=chunks, fill_value=fill_value,
+                                    **kwargs)
         zarr_array.attrs[self._dimension_key] = dims
         _, attributes = _get_zarr_dims_and_attrs(zarr_array,
                                                  self._dimension_key)

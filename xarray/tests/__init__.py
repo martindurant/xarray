@@ -83,6 +83,12 @@ try:
 except ImportError:
     has_rasterio = False
 
+try:
+    import zarr
+    has_zarr = True
+except ImportError:
+    has_zarr = False
+
 # slighly simpler construction that the full functions.
 # Generally `pytest.importorskip('package')` inline is even easier
 requires_matplotlib = pytest.mark.skipif(
@@ -105,7 +111,8 @@ requires_bottleneck = pytest.mark.skipif(
     not has_bottleneck, reason='requires bottleneck')
 requires_rasterio = pytest.mark.skipif(
     not has_rasterio, reason='requires rasterio')
-
+requires_zarr = pytest.mark.skipif(
+    not has_zarr, reason='requires zarr')
 
 try:
     _SKIP_FLAKY = not pytest.config.getoption("--run-flaky")

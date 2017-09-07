@@ -21,13 +21,15 @@ from xarray import (Dataset, DataArray, open_dataset, open_dataarray,
                     open_mfdataset, backends, save_mfdataset)
 from xarray.backends.common import robust_getitem
 from xarray.backends.netCDF4_ import _extract_nc4_variable_encoding
+from xarray.backends.zarr import ZarrStore
 from xarray.core import indexing
 from xarray.core.pycompat import iteritems, PY2, ExitStack, basestring
 
 from . import (TestCase, requires_scipy, requires_netCDF4, requires_pydap,
                requires_scipy_or_netCDF4, requires_dask, requires_h5netcdf,
                requires_pynio, has_netCDF4, has_scipy, assert_allclose,
-               flaky, network, requires_rasterio, assert_identical)
+               flaky, network, requires_rasterio, assert_identical,
+               requires_zarr)
 from .test_dataset import create_test_data
 
 try:
@@ -1934,3 +1936,18 @@ class TestDataArrayToNetCDF(TestCase):
             expected = data.drop('y')
             with open_dataarray(tmp, drop_variables=['y']) as loaded:
                 self.assertDataArrayIdentical(expected, loaded)
+
+
+@requires_zarr
+class TestZarr(TestCase):
+
+    def test_roundtrip(self):
+        data = create_test_data()
+        del data.coords['time']
+        with create_tmp_file() as tmp:
+            z = ZarrStore(store=tmp, overwrite=True)
+            z.store_dataset(data)
+
+            z2 = open_dataset(ZarrStore(store=tmp))
+            for k in data:
+                self.assertTrue((data[k].values == z2[k].values).all())
